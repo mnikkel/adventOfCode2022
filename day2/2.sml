@@ -2512,4 +2512,17 @@ fun compute(t) =
      | (#"C", #"Y") => 2
      | (#"C", #"Z") => 6
 
+fun p2(t) =
+  case t of
+       (#"A", #"X") => 3
+     | (#"A", #"Y") => 4
+     | (#"A", #"Z") => 8
+     | (#"B", #"X") => 1
+     | (#"B", #"Y") => 5
+     | (#"B", #"Z") => 9
+     | (#"C", #"X") => 2
+     | (#"C", #"Y") => 6
+     | (#"C", #"Z") => 7
+
 val total = foldl (fn(t, acc) => compute(t)+acc) 0 contest
+val total2 = foldl (fn(t, acc) => p2(t)+acc) 0 contest
