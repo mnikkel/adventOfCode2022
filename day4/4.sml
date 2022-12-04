@@ -26,28 +26,53 @@ fun rangeList (lines) =
 	loop (lines, [])
     end
 
-val ranges = rangeList lines
-
-fun isContained (points) =
+fun sortedRanges (ranges) =
+    let
+	val sort = ListMergeSort.sort op>
+	fun loop (ranges, sorted) =
+	    case ranges of
+		[] => sorted
+	      | x::rest => loop (rest, sorted @ [sort x])
+    in
+	loop (ranges, [])
+    end
+				     
+fun isContained (points, sorted) =
     let
 	val [a, b, x, y] = points
 	val p1 = [a, x, y, b]
 	val p2 = [x, a, b, y]
-	val sorted = ListMergeSort.sort op> points
     in
 	sorted = p1 orelse sorted = p2
     end
 	
-fun find (ranges) =
+fun isOverlap (points, sorted) =
     let
-	fun loop (ranges, count) =
-	    case ranges of
-		[] => count
-	      | ps::rest => if isContained ps
-			    then loop (rest, count+1)
-			    else loop (rest, count)
+	val [a, b, x, y] = points
+	val p1 = [a, b, x, y]
+	val p2 = [x, y, a, b]
+	val single = b = x orelse y = a
     in
-	loop (ranges, 0)
+	sorted <> p1 andalso sorted <> p2 orelse single
     end
-	
-val part1 = find ranges;
+
+fun findAll (ranges, sorted) =
+    let
+	fun loop (ranges, sorted, count1, count2) =
+	    case ranges of
+		[] => (count1, count2)
+	      | ps::rest => let
+		  val c1 = if isContained (ps, (hd sorted)) then count1+1 else count1
+		  val c2 = if isOverlap (ps, (hd sorted)) then count2+1 else count2
+	      in
+		  loop (rest, (tl sorted), c1, c2)
+	      end
+				
+    in
+	loop (ranges, sorted, 0, 0)
+    end
+
+val ranges = rangeList lines
+val sorted = sortedRanges ranges
+			  
+val (p1, p2) = findAll (ranges, sorted)
