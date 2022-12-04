@@ -46,5 +46,29 @@ fun priorities (chars) =
       loop (chars, [])
     end
 
-val priorityList = priorities (overlapList(sack))
-val total = foldl op+ 0 priorityList
+fun findBadge (a, b, c) =
+    let
+      val csa = charSet.fromList (explode a)
+      val csb = charSet.fromList (explode b)
+      val csc = charSet.fromList (explode c)
+      val i1 = charSet.intersection (csa, csb)
+      val i2 = charSet.intersection (i1, csc)
+    in
+      charSet.listItems i2
+    end
+
+fun elfBadges (sack) =
+    let
+      fun loop (sack, lst) =
+          case sack of
+               [] => lst
+             | a::b::c::rest => loop(rest, (findBadge (a,b,c)) @ lst)
+    in
+      loop(sack, [])
+    end
+
+val priorityList = priorities (overlapList sack)
+val badgeList = priorities (elfBadges sack)
+
+val total1 = foldl op+ 0 priorityList
+val total2 = foldl op+ 0 badgeList
