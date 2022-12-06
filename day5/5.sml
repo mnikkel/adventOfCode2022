@@ -534,7 +534,21 @@ fun move (arr, count, fromThis, toThat) =
     end
     else arr
 
-fun execute (arr, instructions) =
+fun move2 (arr, count, fromThis, toThat) =
+    let
+	val from = fromThis - 1;
+	val to = toThat - 1;
+	val f = Vector.sub (arr, from)
+	val t = Vector.sub (arr, to)
+	val toMove = List.take (f, count)
+	val vec1 = Vector.update (arr, from, List.drop (f, count))
+	val vec2 = Vector.update (vec1, to, toMove @ t)
+				 
+    in
+	vec2
+    end
+
+fun execute (arr, instructions, move) =
     case instructions of
 	[] => arr
       | x::rest =>
@@ -542,7 +556,7 @@ fun execute (arr, instructions) =
 	    val (c,f,t) = x
 	    val v = move (arr, c, f, t)
 	in
-	    execute (v, rest)
+	    execute (v, rest, move)
 	end
 
 fun topCrates (arr) =
@@ -555,4 +569,5 @@ fun topCrates (arr) =
 	loop((Vector.length crates)-1, [])
     end
 	
-val part1 = (topCrates o execute) (crates, instructions)
+val part1 = (topCrates o execute) (crates, instructions, move)
+val part2 = (topCrates o execute) (crates, instructions, move2)
