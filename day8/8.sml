@@ -8,6 +8,7 @@ fun toTuple (x : int) : (bool*int) = (false, x)
 fun convert (lst) = map toTuple lst
 val tList = map convert intList
 val a = Array2.fromList tList
+val b = Array2.fromList intList
 
 fun edge (i : int, j : int, n : int) : bool =
     let val right = (Array2.nCols a) - 1
@@ -53,15 +54,8 @@ fun runTests (i : int, j : int, x : (bool*int)) : (bool*int) =
     let val (b, n) = x in
         if b
         then x
-        else if edge(i,j,n)
-        then (true, n)
-        else if visibleFromLeft(i,j,n)
-        then (true, n)
-        else if visibleFromRight(i,j,n)
-        then (true, n)
-        else if visibleFromAbove(i,j,n)
-        then (true, n)
-        else if visibleFromBelow(i,j,n)
+        else if edge(i,j,n) orelse visibleFromLeft(i,j,n) orelse visibleFromRight(i,j,n)
+                orelse visibleFromAbove(i,j,n) orelse visibleFromBelow(i,j,n)
         then (true, n)
         else x
     end
@@ -73,4 +67,58 @@ fun isVisible(x : (bool*int), count) =
     then count + 1
     else count
 
+fun loopPart2 (n, ints, count) =
+    case ints of
+        [] => count
+      | x::ints' => if x < n
+                    then loopPart2 (n, ints', count + 1)
+                    else count + 1
+
+fun visibleToLeft (i : int, j : int, n : int) : int =
+    let
+        val row = Array2.row (b, i)
+        val left = VectorSlice.foldl op:: [] (VectorSlice.slice (row, 0, SOME j))
+    in
+        loopPart2 (n, left, 0)
+    end
+
+fun visibleToRight (i : int, j : int, n : int) : int =
+    let
+        val row = Array2.row (b, i)
+        val right = rev (VectorSlice.foldl op:: [] (VectorSlice.slice (row, j+1, NONE)))
+    in
+        loopPart2 (n, right, 0)
+    end
+
+fun visibleToAbove (i : int, j : int, n : int) : int =
+    let
+        val col = Array2.column (b, j)
+        val above = VectorSlice.foldl op:: [] (VectorSlice.slice (col, 0, SOME i))
+    in
+        loopPart2 (n, above, 0)
+    end
+
+fun visibleToBelow (i : int, j : int, n : int) : int =
+    let
+        val col = Array2.column (b, j)
+        val below = rev (VectorSlice.foldl op:: [] (VectorSlice.slice (col, i+1, NONE)))
+    in
+        loopPart2 (n, below, 0)
+    end
+
+fun runTests2 (i : int, j : int, x : int) : int =
+    let val a = visibleToLeft(i,j,x)
+        val b = visibleToRight(i,j,x)
+        val c = visibleToAbove(i,j,x)
+        val d = visibleToBelow(i,j,x)
+    in
+        a * b * c * d
+    end
+
+fun part2Test (i, j, x, y) =
+    let val n = runTests2 (i, j, x) in
+        Int.max (n, y)
+    end
+
 val part1 = Array2.fold Array2.RowMajor isVisible 0 a
+val part2 = Array2.foldi Array2.RowMajor part2Test 0 {base=b,row=0,col=0,nrows=NONE,ncols=NONE}
