@@ -4,14 +4,6 @@ val lines = split ins
 val chars = map explode lines
 val matrix = Array2.fromList chars
 
-datatype edgenode =
-         Empty
-         | Node of int * char
-
-datatype graph =
-         Empty
-       | G of edgenode list array
-
 val graph = Array.array (length chars * length (hd chars), [] : int list)
 val parents = Array.array (length chars * length (hd chars), ~1)
 
@@ -25,6 +17,14 @@ fun findChar (arr, ch, startAt) =
         else findChar (arr, ch, startAt+1)
     end
 
+fun idLabel (id) =
+    let
+        val i = id div Array2.nCols matrix
+        val j = id mod Array2.nCols matrix
+    in
+        Array2.sub (matrix, i, j)
+    end
+
 val start = findChar (matrix, #"S", 0)
 val finish = findChar (matrix, #"E", 0)
 
@@ -32,6 +32,19 @@ fun add (id, adjNode) =
     let val adjList = Array.sub (graph, id) in
         Array.update (graph, id, adjNode::adjList)
     end
+
+(* part 1 *)
+(* fun adjacent (charX, charY) = *)
+(*     let *)
+(*         fun replace (ch1, ch2, ch3) = *)
+(*             if ch1 = ch2 *)
+(*             then ch3 *)
+(*             else ch1 *)
+(*         val x = replace ((replace (charX, #"S", #"a")), #"E", #"z") *)
+(*         val y = replace ((replace (charY, #"S", #"a")), #"E", #"z") *)
+(*     in *)
+(*         x >= y orelse Char.succ x = y *)
+(*     end *)
 
 fun adjacent (charX, charY) =
     let
@@ -42,9 +55,8 @@ fun adjacent (charX, charY) =
         val x = replace ((replace (charX, #"S", #"a")), #"E", #"z")
         val y = replace ((replace (charY, #"S", #"a")), #"E", #"z")
     in
-        x >= y orelse Char.succ x = y
+        x <= y orelse Char.pred x = y
     end
-
 
 fun findHorizontal (lst : char list list, count) =
     let fun loop (charList, count) =
@@ -113,8 +125,8 @@ fun bfs (graph, start, finish) =
                   | n::queue' => let val adj = Array.sub (graph, n)
                                      val (q, v) = addToQueue (adj, n, visited, queue')
                                  in
-                                     if List.exists (fn(x)=>x=finish) adj
-                                     then print "Found\n"
+                                     if List.exists (fn(x)=>idLabel(x)=finish) adj
+                                     then List.filter (fn(x)=>idLabel(x)=finish) adj
                                      else loop (v, q)
                                  end
     in
@@ -129,6 +141,10 @@ fun countSteps (parents, start, finish, steps) =
     end;
 
 readGraph chars;
-bfs (graph, start, finish);
+val location = bfs (graph, start, #"E");
 
 val part1 = countSteps (parents, start, finish, 0)
+
+val location2 = bfs (graph, finish, #"a");
+
+val part2 = countSteps (parents, finish, (hd location2), 0)
