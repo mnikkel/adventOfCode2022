@@ -79,3 +79,37 @@ fun compare (input) =
 
 val p1 = processPairs tokens
 val part1 = compare p1
+
+fun bubbleSort (input) =
+    let fun loop (input, sort, isSorted) =
+            case input of
+                [] => if isSorted then rev sort else loop(rev sort, [], true)
+              | x::[] => loop ([], x::sort, isSorted)
+              | a::b::input' => let val (s, _) = comparePair (a, b) in
+                                    if s
+                                    then loop (b::input', a::sort, isSorted)
+                                    else loop (a::input', b::sort, false)
+                                end
+    in
+        loop (input, [], true)
+    end
+
+val dividers = [PacketList([PacketList([Number(2)])]), PacketList([PacketList([Number(6)])])]
+val sorted = bubbleSort (dividers @ p1)
+
+fun decoderKey (sortedInput) =
+    let
+        val two::six::[] = dividers
+        fun loop (input, i, t) =
+            case input of
+                [] => raise Match
+              | x::input' => if x = two
+                             then loop (input', i+1, i)
+                             else if x = six
+                             then i * t
+                             else loop (input', i+1, t)
+    in
+        loop (sortedInput, 1, 1)
+    end
+
+val part2 = decoderKey sorted
