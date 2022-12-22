@@ -1,4 +1,4 @@
-val ins = TextIO.openIn "test.txt"
+val ins = TextIO.openIn "input.txt"
 val split = String.tokens Char.isCntrl o TextIO.inputAll
 val lines = split ins
 val tokens = map explode lines
@@ -19,13 +19,17 @@ fun makePacket (chars) =
                                                                loop (chars', merged::stack')
                                                            end)
               | #","::chars' => loop (chars', stack)
-              | d::chars' => let val PacketList top = hd stack in
-                                 if Char.isDigit d
-                                 then let val n = valOf (Int.fromString (Char.toString d)) in
-                                          loop (chars', (PacketList (top @ [Number(n)]))::(tl stack))
-                                      end
-                                 else raise Match
-                             end
+              | d1::d2::chars' => let val PacketList top = hd stack
+                                      val isTwoDigits = Char.isDigit d2
+                                      val str = if isTwoDigits
+                                                then implode [d1, d2]
+                                                else Char.toString d1
+                                      val n = valOf (Int.fromString str)
+                                  in
+                                      if isTwoDigits
+                                      then loop (chars', (PacketList (top @ [Number(n)]))::(tl stack))
+                                      else loop (d2::chars', (PacketList (top @ [Number(n)]))::(tl stack))
+                                  end
     in
         case chars of
             [] => PacketList []
@@ -36,32 +40,42 @@ fun processPairs (input) =
     let fun loop (input, packets) =
             case input of
                 [] => List.rev packets
+              | _::[] => raise Match
              | l::r::input' => loop (input', (makePacket r)::(makePacket l)::packets)
     in
         loop (input, [])
     end
 
-fun comparePair (left, right) =
+fun comparePair (left : packet, right : packet) : (bool * bool) =
     case (left, right) of
-        (PacketList [], PacketList _) => true
-      | (PacketList _, PacketList []) => false
-      | (Number (l), Number (r)) => l <= r
-      | (Number (l), PacketList (r)) => comparePair(PacketList([left]), right)
-      | (PacketList (l), Number (r)) => comparePair(left, PacketList ([right]))
-      | (PacketList (l), PacketList (r)) => let val a::l' = l
-                                                val b::r' = r
-                                            in
-                                                comparePair(a, b) andalso comparePair(PacketList l', PacketList r')
-                                            end
+        (PacketList [], PacketList (_::_)) => (true, true)
+      | (PacketList [], PacketList []) => (false, true)
+      | (PacketList (_::_), PacketList []) => (false, false)
+      | (Number (l), Number (r)) => (l < r, l = r)
+      | (Number _, PacketList _) => comparePair(PacketList([left]), right)
+      | (PacketList _, Number _) => comparePair(left, PacketList ([right]))
+      | (PacketList (l::l'), PacketList (r::r')) => let val (less, equal ) = comparePair(l, r)
+                                                    in
+                                                        if less
+                                                        then (true, true)
+                                                        else if equal
+                                                        then comparePair(PacketList l', PacketList r')
+                                                        else (false, false)
+                                                    end
 
 fun compare (input) =
     let fun loop (input, i, sum) =
             case input of
                 [] => sum
-              | left::right::input' => if comparePair (left, right)
-                                       then loop (input', i+1, sum+i)
-                                       else loop (input', i+1, sum)
+              | _::[] => raise Match
+              | left::right::input' => let val (less, _) = comparePair (left, right) in
+                                           if less
+                                           then loop (input', i+1, sum+i)
+                                           else loop (input', i+1, sum)
+                                       end
     in
         loop (input, 1, 0)
     end
 
+val p1 = processPairs tokens
+val part1 = compare p1
