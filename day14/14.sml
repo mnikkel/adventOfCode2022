@@ -96,7 +96,7 @@ fun drop (start, set) =
         val moveTo = moveSand (start, set)
         val (_, y) = moveTo
     in
-        if y >= floor
+        if y >= floor+2
         then set
         else if start = moveTo
         then pointSet.add (set, start)
@@ -107,7 +107,7 @@ fun countSand (start, set) =
     let
         fun loop (set, count) =
             let val s1 = drop (start, set) in
-                if pointSet.equal (set, s1)
+                if pointSet.equal (set, s1) orelse pointSet.member (set, start)
                 then count
                 else loop (s1, count+1)
             end
@@ -116,3 +116,7 @@ fun countSand (start, set) =
     end
 
 val part1 = countSand (start, s)
+
+val floorPart2 = fillPoints ((~10000, floor+2), (10000, floor+2))
+val s2 = pointSet.addList (s, floorPart2)
+val part2 = countSand (start, s2)
